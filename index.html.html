@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corporate Payroll Burn & Financial Liability Engine — Gourav Balyan</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  /* Backgrounds */
+  --bg:         #F0F2F7;
+  --surface:    #F7F8FC;
+  --card:       #FFFFFF;
+  --card-alt:   #FAFBFE;
+
+  /* Borders & Shadows */
+  --border:     #E4E8F0;
+  --border-md:  #D1D8E8;
+  --shadow-sm:  0 1px 3px rgba(15,30,75,0.06), 0 1px 2px rgba(15,30,75,0.04);
+  --shadow-md:  0 4px 16px rgba(15,30,75,0.08), 0 1px 4px rgba(15,30,75,0.04);
+  --shadow-lg:  0 8px 32px rgba(15,30,75,0.10), 0 2px 8px rgba(15,30,75,0.06);
+
+  /* Typography */
+  --text-primary:   #0F1E4B;
+  --text-secondary: #4A5578;
+  --text-muted:     #8A95B4;
+  --text-faint:     #B8C0D8;
+
+  /* Brand & Accent */
+  --navy:    #1A2E6E;
+  --blue:    #2563EB;
+  --blue-lt: #EEF4FF;
+
+  /* Department palette — muted, professional */
+  --eng:     #2563EB;   /* engineering — electric blue */
+  --eng-lt:  #EEF4FF;
+  --fin:     #059669;   /* finance — emerald */
+  --fin-lt:  #ECFDF5;
+  --mkt:     #D97706;   /* marketing — amber */
+  --mkt-lt:  #FFFBEB;
+  --ops:     #7C3AED;   /* operations — violet */
+  --ops-lt:  #F5F3FF;
+  --sal:     #DC2626;   /* sales — crimson */
+  --sal-lt:  #FEF2F2;
+
+  --font:  'Plus Jakarta Sans', sans-serif;
+  --mono:  'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* subtle dot grid on bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(circle, rgba(37,99,235,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none; z-index: 0;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 10px; }
+
+/* ─── NAV ─────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 2.5rem;
+  height: 60px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(15,30,75,0.05);
+}
+.nav-left { display: flex; align-items: center; gap: 1.25rem; }
+.nav-logo {
+  font-weight: 800; font-size: 0.95rem; letter-spacing: -0.02em;
+  color: var(--navy);
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.nav-logo-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.75rem; font-weight: 800; letter-spacing: -0.03em;
+}
+.nav-divider { width: 1px; height: 18px; background: var(--border-md); }
+.nav-title { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
+.nav-right { display: flex; align-items: center; gap: 1rem; }
+.nav-meta { font-family: var(--mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.nav-badge {
+  font-family: var(--mono); font-size: 0.6rem;
+  background: #ECFDF5; color: #059669;
+  border: 1px solid #A7F3D0;
+  border-radius: 100px; padding: 0.28rem 0.7rem;
+  display: flex; align-items: center; gap: 0.4rem;
+  font-weight: 500;
+}
+.nav-badge::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: #059669; flex-shrink: 0;
+  animation: livepulse 2s infinite;
+}
+@keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ─── MAIN ─────────────────────────────────────────── */
+main { max-width: 1320px; margin: 0 auto; padding: 2rem 2.5rem 4rem; position: relative; z-index: 1; }
+
+/* ─── PAGE HEADER ───────────────────────────────────── */
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;
+}
+.page-header-left h1 {
+  font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+  font-weight: 800; letter-spacing: -0.03em;
+  color: var(--text-primary); margin-bottom: 0.3rem;
+}
+.page-header-left p {
+  font-family: var(--mono); font-size: 0.63rem;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+}
+.filter-wrap { display: flex; align-items: center; gap: 0.6rem; }
+.filter-wrap label {
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+}
+.filter-wrap select {
+  font-family: var(--font); font-size: 0.8rem; font-weight: 600;
+  background: var(--card); color: var(--text-primary);
+  border: 1.5px solid var(--border-md); border-radius: 10px;
+  padding: 0.5rem 2rem 0.5rem 0.85rem;
+  cursor: pointer; outline: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 12 12'%3E%3Cpath stroke='%238A95B4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.7rem center;
+}
+.filter-wrap select:focus, .filter-wrap select:hover {
+  border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* ─── KPI STRIP ─────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 1rem; margin-bottom: 1.25rem;
+}
+@media(max-width:1100px){ .metrics-grid { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:640px){ .metrics-grid { grid-template-columns: repeat(2,1fr); } }
+
+.metric-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem 1.4rem;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.metric-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+/* accent stripe */
+.metric-card::after {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 14px 14px 0 0;
+}
+.mc-blue::after   { background: linear-gradient(90deg, var(--eng), #60A5FA); }
+.mc-green::after  { background: linear-gradient(90deg, var(--fin), #34D399); }
+.mc-amber::after  { background: linear-gradient(90deg, var(--mkt), #FBBF24); }
+.mc-purple::after { background: linear-gradient(90deg, var(--ops), #A78BFA); }
+.mc-red::after    { background: linear-gradient(90deg, var(--sal), #F87171); }
+.mc-navy::after   { background: linear-gradient(90deg, var(--navy), #4A5578); }
+
+.metric-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.8rem; font-size: 0.95rem;
+}
+.metric-label {
+  font-family: var(--mono); font-size: 0.58rem;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-muted); margin-bottom: 0.4rem;
+}
+.metric-value {
+  font-size: 1.55rem; font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1;
+  color: var(--text-primary); margin-bottom: 0.35rem;
+}
+.metric-value.clr-blue   { color: var(--eng); }
+.metric-value.clr-green  { color: var(--fin); }
+.metric-value.clr-amber  { color: var(--mkt); }
+.metric-value.clr-purple { color: var(--ops); }
+.metric-value.clr-red    { color: var(--sal); }
+.metric-value.clr-navy   { color: var(--navy); }
+.metric-sub {
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--text-muted); line-height: 1.4;
+}
+
+/* ─── EXECUTIVE SUMMARY ─────────────────────────────── */
+.exec-summary {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.4rem 1.75rem;
+  margin-bottom: 1.25rem; box-shadow: var(--shadow-sm);
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;
+}
+@media(max-width:768px){ .exec-summary { grid-template-columns: 1fr; } }
+
+.exec-insight { position: relative; padding-left: 1rem; }
+.exec-insight::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 3px;
+}
+.exec-insight:nth-child(1)::before { background: var(--eng); }
+.exec-insight:nth-child(2)::before { background: var(--fin); }
+.exec-insight:nth-child(3)::before { background: var(--ops); }
+
+.exec-insight-label {
+  font-family: var(--mono); font-size: 0.57rem;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--blue); margin-bottom: 0.4rem; font-weight: 500;
+}
+.exec-insight-text {
+  font-size: 0.8rem; color: var(--text-secondary); line-height: 1.65;
+}
+.exec-insight-text strong { color: var(--text-primary); font-weight: 700; }
+
+/* ─── CHARTS ROW ─────────────────────────────────────── */
+.charts-row {
+  display: grid; grid-template-columns: 1.65fr 1fr;
+  gap: 1.25rem; margin-bottom: 1.25rem;
+}
+@media(max-width:900px){ .charts-row { grid-template-columns: 1fr; } }
+
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.chart-card-header { margin-bottom: 1rem; }
+.chart-card-header h3 {
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 0.2rem; letter-spacing: -0.01em;
+}
+.chart-card-header p {
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.09em;
+}
+.legend {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem;
+  margin-bottom: 1rem;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 0.35rem;
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--text-secondary); font-weight: 500;
+}
+.legend-dot { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
+
+/* ─── TABLE ──────────────────────────────────────────── */
+.table-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.5rem;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.table-card-header { margin-bottom: 1.25rem; }
+.table-card-header h3 {
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 0.2rem; letter-spacing: -0.01em;
+}
+.table-card-header p {
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.09em;
+}
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th {
+  font-family: var(--mono); font-size: 0.58rem;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); padding: 0.6rem 1rem;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: left; font-weight: 500; white-space: nowrap;
+}
+.data-table thead th:first-child { border-radius: 8px 0 0 8px; }
+.data-table thead th:last-child  { border-radius: 0 8px 8px 0; }
+
+.data-table tbody td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem; color: var(--text-primary);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:nth-child(even) td { background: #FAFBFE; }
+.data-table tbody tr:hover td { background: var(--blue-lt); transition: background 0.15s; }
+
+.dept-badge {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.28rem 0.75rem; border-radius: 100px;
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.dept-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+.badge-eng { background: var(--eng-lt); color: var(--eng); border: 1px solid rgba(37,99,235,0.2); }
+.badge-fin { background: var(--fin-lt); color: var(--fin); border: 1px solid rgba(5,150,105,0.2); }
+.badge-mkt { background: var(--mkt-lt); color: var(--mkt); border: 1px solid rgba(217,119,6,0.2); }
+.badge-ops { background: var(--ops-lt); color: var(--ops); border: 1px solid rgba(124,58,237,0.2); }
+.badge-sal { background: var(--sal-lt); color: var(--sal); border: 1px solid rgba(220,38,38,0.2); }
+
+.td-mono { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; }
+.td-muted { color: var(--text-secondary); }
+
+.share-bar-wrap {
+  margin-top: 5px; height: 4px;
+  background: var(--border); border-radius: 4px; width: 110px;
+}
+.share-bar-fill { height: 4px; border-radius: 4px; transition: width 0.5s ease; }
+
+/* ─── FOOTER ─────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 2.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 0.75rem;
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,0.6);
+}
+.footer-left { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); }
+.footer-left span { color: var(--blue); font-weight: 600; }
+.footer-right { font-family: var(--mono); font-size: 0.6rem; color: var(--text-faint); }
+
+/* ─── ANIMATIONS ─────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fadein { animation: fadeUp 0.55s cubic-bezier(.22,.68,0,1.2) both; }
+.fadein-d1 { animation-delay: 0.06s; }
+.fadein-d2 { animation-delay: 0.12s; }
+.fadein-d3 { animation-delay: 0.18s; }
+.fadein-d4 { animation-delay: 0.24s; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">GB</div>
+      Gourav Balyan
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-title">Corporate Payroll Burn &amp; Financial Liability Engine</div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-meta">Corporate HR Analytics · FY 2026</div>
+    <div class="nav-badge">Live Dashboard</div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header fadein">
+    <div class="page-header-left">
+      <h1>Corporate Payroll Burn & Financial Liability Engine</h1>
+      <p>5,000 Employees &nbsp;·&nbsp; 5 Departments &nbsp;·&nbsp; 5 Projects &nbsp;·&nbsp; Base Salary Analysis &nbsp;·&nbsp; INR</p>
+    </div>
+    <div class="filter-wrap">
+      <label>Filter by Dept</label>
+      <select id="deptFilter" onchange="applyFilter()">
+        <option value="All">All Departments</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Finance">Finance</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Operations">Operations</option>
+        <option value="Sales">Sales</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPI STRIP — 6 cards -->
+  <div class="metrics-grid fadein fadein-d1">
+
+    <div class="metric-card mc-blue">
+      <div class="metric-icon" style="background:var(--eng-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="var(--eng)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4" stroke="var(--eng)" stroke-width="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--eng)" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="metric-label">Total Headcount</div>
+      <div class="metric-value clr-blue" id="m-headcount">—</div>
+      <div class="metric-sub" id="m-headcount-sub">across all departments</div>
+    </div>
+
+    <div class="metric-card mc-green">
+      <div class="metric-icon" style="background:var(--fin-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="var(--fin)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="metric-label">Total Payroll</div>
+      <div class="metric-value clr-green" id="m-payroll">—</div>
+      <div class="metric-sub">annual base salary</div>
+    </div>
+
+    <div class="metric-card mc-amber">
+      <div class="metric-icon" style="background:var(--mkt-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="var(--mkt)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div class="metric-label">Average Salary</div>
+      <div class="metric-value clr-amber" id="m-avg">—</div>
+      <div class="metric-sub">per employee / per annum</div>
+    </div>
+
+    <div class="metric-card mc-purple">
+      <div class="metric-icon" style="background:var(--ops-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" stroke="var(--ops)" stroke-width="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="var(--ops)" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="metric-label">Bonus Liability</div>
+      <div class="metric-value clr-purple" id="m-bonus">—</div>
+      <div class="metric-sub">at 12% bonus rate</div>
+    </div>
+
+    <div class="metric-card mc-red">
+      <div class="metric-icon" style="background:var(--sal-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="var(--sal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+      <div class="metric-label">Total Bonus Liability</div>
+      <div class="metric-value clr-red" id="m-total-bonus">—</div>
+      <div class="metric-sub">payroll + bonus combined</div>
+    </div>
+
+    <div class="metric-card mc-navy">
+      <div class="metric-icon" style="background:var(--blue-lt)">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4" stroke="var(--navy)" stroke-width="2"/><line x1="23" y1="11" x2="17" y2="11" stroke="var(--navy)" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="metric-label">Avg Cost Per Employee</div>
+      <div class="metric-value clr-navy" id="m-cost-per-emp">—</div>
+      <div class="metric-sub">salary + bonus fully loaded</div>
+    </div>
+
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="exec-summary fadein fadein-d2" id="execSummary">
+    <div class="exec-insight">
+      <div class="exec-insight-label">&#9642; Key Insight · Payroll</div>
+      <div class="exec-insight-text" id="ins-payroll">Loading...</div>
+    </div>
+    <div class="exec-insight">
+      <div class="exec-insight-label">&#9642; Key Insight · Headcount</div>
+      <div class="exec-insight-text" id="ins-headcount">Loading...</div>
+    </div>
+    <div class="exec-insight">
+      <div class="exec-insight-label">&#9642; Key Insight · Efficiency</div>
+      <div class="exec-insight-text" id="ins-efficiency">Loading...</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="charts-row fadein fadein-d3">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>Payroll Cost by Project</h3>
+        <p>Total base salary spend per active project (₹ Crores)</p>
+      </div>
+      <div class="legend" id="barLegend"></div>
+      <div style="position:relative;width:100%;height:270px;">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>Headcount by Department</h3>
+        <p>Employee distribution across all business units</p>
+      </div>
+      <div class="legend" id="donutLegend"></div>
+      <div style="position:relative;width:100%;height:270px;">
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DATA TABLE -->
+  <div class="table-card fadein fadein-d4">
+    <div class="table-card-header">
+      <h3>Department Breakdown</h3>
+      <p>Detailed headcount, payroll, and efficiency metrics per business unit</p>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Headcount</th>
+          <th>Total Payroll</th>
+          <th>Avg Salary</th>
+          <th>Bonus Liability</th>
+          <th>Avg Cost / Employee</th>
+          <th>Share of Workforce</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-left">Built by <span>Gourav Balyan</span> · Enterprise Business Intelligence Portfolio · 2026</div>
+  <div class="footer-right">Corporate Payroll Burn & Financial Liability Engine · 5,000 Records · All figures in INR</div>
+</footer>
+
+<script>
+/* ── DATA ───────────────────────────────── */
+const DEPT_COLORS = {
+  Engineering: '#2563EB',
+  Finance:     '#059669',
+  Marketing:   '#D97706',
+  Operations:  '#7C3AED',
+  Sales:       '#DC2626'
+};
+const DEPT_BG = {
+  Engineering: '#EEF4FF',
+  Finance:     '#ECFDF5',
+  Marketing:   '#FFFBEB',
+  Operations:  '#F5F3FF',
+  Sales:       '#FEF2F2'
+};
+const PROJ_COLORS = ['#2563EB','#059669','#D97706','#7C3AED','#DC2626'];
+const BADGE_MAP = {
+  Engineering: 'badge-eng',
+  Finance:     'badge-fin',
+  Marketing:   'badge-mkt',
+  Operations:  'badge-ops',
+  Sales:       'badge-sal'
+};
+const DEPTS    = ['Engineering','Finance','Marketing','Operations','Sales'];
+const PROJECTS = ['Cloud AI','Market Expansion','Mobile App','Project Titan','Security Audit'];
+
+const DEPT_COUNTS  = { Engineering:967, Finance:934, Marketing:1067, Operations:1032, Sales:1000 };
+const DEPT_PAYROLL = { Engineering:26018470000, Finance:25012340000, Marketing:28721090000, Operations:27700340000, Sales:26875420000 };
+const PROJ_PAYROLL = { 'Cloud AI':32914000000, 'Market Expansion':34123000000, 'Mobile App':27382000000, 'Project Titan':31098000000, 'Security Audit':28810000000 };
+
+const TOTAL_HC      = 5000;
+const TOTAL_PAYROLL = 134327660000;
+
+/* ── FORMAT ─────────────────────────────── */
+function fmtCr(n) {
+  if(n >= 10000000) return '₹' + (n/10000000).toFixed(1) + ' Cr';
+  if(n >= 100000)   return '₹' + (n/100000).toFixed(1) + ' L';
+  return '₹' + Math.round(n).toLocaleString('en-IN');
+}
+function fmtL(n) { return '₹' + (n/100000).toFixed(1) + ' L'; }
+
+let barInst = null, donutInst = null;
+
+/* ── FILTER ─────────────────────────────── */
+function applyFilter() {
+  const dept = document.getElementById('deptFilter').value;
+  const hc   = dept === 'All' ? TOTAL_HC : DEPT_COUNTS[dept];
+  const pay  = dept === 'All' ? TOTAL_PAYROLL : DEPT_PAYROLL[dept];
+  const avg  = Math.round(pay / hc);
+  const bonus = Math.round(pay * 0.12);
+  const totalWithBonus = pay + bonus;
+  const costPerEmp = Math.round(totalWithBonus / hc);
+
+  document.getElementById('m-headcount').textContent = hc.toLocaleString('en-IN');
+  document.getElementById('m-headcount-sub').textContent = dept === 'All' ? 'across all departments' : dept + ' department';
+  document.getElementById('m-payroll').textContent = fmtCr(pay);
+  document.getElementById('m-avg').textContent = fmtL(avg);
+  document.getElementById('m-bonus').textContent = fmtCr(bonus);
+  document.getElementById('m-total-bonus').textContent = fmtCr(totalWithBonus);
+  document.getElementById('m-cost-per-emp').textContent = fmtL(costPerEmp);
+
+  updateInsights(dept, hc, pay, avg);
+  updateBarChart(dept);
+  updateDonutChart(dept);
+  updateTable(dept);
+}
+
+/* ── INSIGHTS ───────────────────────────── */
+function updateInsights(dept, hc, pay, avg) {
+  if(dept === 'All') {
+    document.getElementById('ins-payroll').innerHTML =
+      '<strong>Marketing</strong> leads payroll at ₹287.2 Cr, representing 21.4% of total compensation. <strong>Finance</strong> is leanest at ₹250.1 Cr.';
+    document.getElementById('ins-headcount').innerHTML =
+      '<strong>Marketing</strong> has the largest headcount (1,067) vs. <strong>Finance</strong> at 934. The spread represents a 14.2% difference.';
+    document.getElementById('ins-efficiency').innerHTML =
+      'Average fully-loaded cost per employee is <strong>₹30.1 L/year</strong> (salary + 12% bonus). Total bonus pool: <strong>₹161.2 Cr</strong>.';
+  } else {
+    const share = ((hc / TOTAL_HC) * 100).toFixed(1);
+    const bonus  = Math.round(pay * 0.12);
+    const tcp = pay + bonus;
+    document.getElementById('ins-payroll').innerHTML =
+      '<strong>' + dept + '</strong> contributes ' + ((pay/TOTAL_PAYROLL)*100).toFixed(1) + '% of total corporate payroll at ' + fmtCr(pay) + ' annually.';
+    document.getElementById('ins-headcount').innerHTML =
+      dept + ' employs <strong>' + hc.toLocaleString('en-IN') + ' people</strong>, representing ' + share + '% of the total workforce.';
+    document.getElementById('ins-efficiency').innerHTML =
+      'Fully-loaded cost (salary + bonus): <strong>' + fmtCr(tcp) + '</strong>. Avg cost per employee: <strong>' + fmtL(Math.round(tcp/hc)) + '</strong>.';
+  }
+}
+
+/* ── BAR CHART ──────────────────────────── */
+function updateBarChart(dept) {
+  const ctx = document.getElementById('barChart').getContext('2d');
+  let vals;
+  if(dept === 'All') {
+    vals = PROJECTS.map(p => parseFloat((PROJ_PAYROLL[p]/10000000).toFixed(1)));
+  } else {
+    const ratio = DEPT_COUNTS[dept] / TOTAL_HC;
+    vals = PROJECTS.map(p => parseFloat((PROJ_PAYROLL[p] * ratio / 10000000).toFixed(1)));
+  }
+  document.getElementById('barLegend').innerHTML = PROJECTS.map((p,i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${PROJ_COLORS[i]}"></div>${p}</div>`
+  ).join('');
+
+  if(barInst) barInst.destroy();
+  barInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: PROJECTS,
+      datasets: [{
+        data: vals,
+        backgroundColor: PROJ_COLORS.map(c => c + '22'),
+        borderColor: PROJ_COLORS,
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+        hoverBackgroundColor: PROJ_COLORS.map(c => c + '44'),
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F1E4B',
+          titleColor: '#B8C0D8',
+          bodyColor: '#FFFFFF',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          padding: { top:10, bottom:10, left:14, right:14 },
+          cornerRadius: 10,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 10, weight: '400' },
+          bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
+          callbacks: {
+            title: c => c[0].label,
+            label: c => '  ₹' + c.raw + ' Crore'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: {
+            color: '#8A95B4',
+            font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' }
+          }
+        },
+        y: {
+          grid: { color: 'rgba(15,30,75,0.05)', drawTicks: false },
+          border: { display: false, dash: [4,4] },
+          ticks: {
+            color: '#8A95B4',
+            font: { size: 10, family: "'JetBrains Mono', monospace" },
+            callback: v => '₹' + v + ' Cr',
+            maxTicksLimit: 5, padding: 8
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── DONUT CHART ─────────────────────────── */
+function updateDonutChart(dept) {
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  const counts = DEPTS.map(d => dept === 'All' ? DEPT_COUNTS[d] : (d === dept ? DEPT_COUNTS[d] : 0));
+  const total  = counts.reduce((a,b) => a+b, 0);
+  const colors = DEPTS.map(d => DEPT_COLORS[d]);
+  const bgs    = DEPTS.map(d => DEPT_BG[d]);
+
+  document.getElementById('donutLegend').innerHTML = DEPTS.map((d,i) => counts[i] > 0
+    ? `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div>${d} <span style="color:var(--text-muted);margin-left:2px">${Math.round(counts[i]/total*100)}%</span></div>`
+    : ''
+  ).join('');
+
+  if(donutInst) donutInst.destroy();
+  donutInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: DEPTS,
+      datasets: [{
+        data: counts,
+        backgroundColor: colors,
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        hoverBorderColor: '#FFFFFF',
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F1E4B',
+          titleColor: '#B8C0D8',
+          bodyColor: '#FFFFFF',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          padding: { top:10, bottom:10, left:14, right:14 },
+          cornerRadius: 10,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 10, weight: '400' },
+          bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
+          callbacks: {
+            title: c => c[0].label,
+            label: c => '  ' + c.raw.toLocaleString('en-IN') + ' employees'
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── TABLE ───────────────────────────────── */
+function updateTable(dept) {
+  const depts = dept === 'All' ? DEPTS : [dept];
+  document.getElementById('tableBody').innerHTML = depts.map(d => {
+    const hc    = DEPT_COUNTS[d];
+    const pay   = DEPT_PAYROLL[d];
+    const avg   = Math.round(pay / hc);
+    const bonus = Math.round(pay * 0.12);
+    const tcp   = pay + bonus;
+    const costPerEmp = Math.round(tcp / hc);
+    const share = ((hc / TOTAL_HC) * 100).toFixed(1);
+    const barW  = Math.round((hc / TOTAL_HC) * 100 * 5);
+    return `<tr>
+      <td>
+        <span class="dept-badge ${BADGE_MAP[d]}">
+          <span class="dot" style="background:${DEPT_COLORS[d]}"></span>${d}
+        </span>
+      </td>
+      <td class="td-mono">${hc.toLocaleString('en-IN')}</td>
+      <td class="td-mono">${fmtCr(pay)}</td>
+      <td class="td-mono td-muted">${fmtL(avg)}</td>
+      <td class="td-mono">${fmtCr(bonus)}</td>
+      <td class="td-mono td-muted">${fmtL(costPerEmp)}</td>
+      <td>
+        <span class="td-mono td-muted" style="font-size:0.65rem">${share}%</span>
+        <div class="share-bar-wrap">
+          <div class="share-bar-fill" style="width:${Math.min(barW,100)}%;background:${DEPT_COLORS[d]}"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+applyFilter();
+</script>
+</body>
+</html>
